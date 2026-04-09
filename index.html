@@ -1,0 +1,1232 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ASO — Quiz Interactivo</title>
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=JetBrains+Mono:wght@300;400;600&family=Share+Tech+Mono&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #050a0f;
+    --bg2: #0a1520;
+    --bg3: #0d1e2e;
+    --cyan: #00e5ff;
+    --cyan2: #00b8cc;
+    --green: #39ff14;
+    --purple: #bf5fff;
+    --red: #ff3c5a;
+    --yellow: #ffd600;
+    --text: #c8e6f0;
+    --text-dim: #5a8a9f;
+    --border: #1a3a4a;
+    --border2: #0f2535;
+    --glow: 0 0 20px rgba(0,229,255,0.25);
+    --glow2: 0 0 40px rgba(0,229,255,0.15);
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'JetBrains Mono', monospace;
+    min-height: 100vh;
+    overflow-x: hidden;
+    position: relative;
+  }
+
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image:
+      linear-gradient(rgba(0,229,255,0.03) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(0,229,255,0.03) 1px, transparent 1px);
+    background-size: 40px 40px;
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  body::after {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background: repeating-linear-gradient(
+      0deg,
+      transparent,
+      transparent 2px,
+      rgba(0,0,0,0.08) 2px,
+      rgba(0,0,0,0.08) 4px
+    );
+    pointer-events: none;
+    z-index: 1;
+  }
+
+  .container {
+    position: relative;
+    z-index: 2;
+    max-width: 900px;
+    margin: 0 auto;
+    padding: 20px;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .header {
+    text-align: center;
+    padding: 40px 0 30px;
+    border-bottom: 1px solid var(--border);
+    margin-bottom: 40px;
+    position: relative;
+  }
+
+  .header::after {
+    content: '';
+    position: absolute;
+    bottom: -1px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 200px;
+    height: 1px;
+    background: var(--cyan);
+    box-shadow: var(--glow);
+  }
+
+  .header-label {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 11px;
+    color: var(--cyan);
+    letter-spacing: 6px;
+    text-transform: uppercase;
+    margin-bottom: 12px;
+    opacity: 0.7;
+  }
+
+  .header-title {
+    font-family: 'Orbitron', sans-serif;
+    font-size: clamp(28px, 6vw, 48px);
+    font-weight: 900;
+    color: var(--cyan);
+    text-shadow: 0 0 30px rgba(0,229,255,0.5), 0 0 60px rgba(0,229,255,0.2);
+    letter-spacing: 6px;
+    line-height: 1;
+    margin-bottom: 8px;
+  }
+
+  .header-sub {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 13px;
+    color: var(--text-dim);
+    letter-spacing: 2px;
+  }
+
+  .header-sub span {
+    color: var(--green);
+  }
+
+  #screen-modules { display: flex; flex-direction: column; gap: 16px; }
+
+  .modules-intro {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 12px;
+    color: var(--text-dim);
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    text-align: center;
+    margin-bottom: 8px;
+  }
+
+  .module-btn {
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    border-left: 3px solid var(--cyan);
+    padding: 18px 24px;
+    cursor: pointer;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    transition: all 0.2s;
+    position: relative;
+    overflow: hidden;
+    width: 100%;
+    text-align: left;
+  }
+
+  .module-btn::before {
+    content: '';
+    position: absolute;
+    left: 0; top: 0; bottom: 0;
+    width: 3px;
+    background: var(--cyan);
+    box-shadow: 0 0 12px var(--cyan);
+  }
+
+  .module-btn:hover {
+    background: var(--bg3);
+    border-color: var(--cyan);
+    box-shadow: var(--glow), inset 0 0 30px rgba(0,229,255,0.05);
+    transform: translateX(3px);
+  }
+
+  .module-btn.all-mode {
+    border-left-color: var(--purple);
+    margin-top: 8px;
+  }
+  .module-btn.all-mode::before { background: var(--purple); box-shadow: 0 0 12px var(--purple); }
+  .module-btn.all-mode:hover { border-color: var(--purple); box-shadow: 0 0 20px rgba(191,95,255,0.25), inset 0 0 30px rgba(191,95,255,0.05); }
+
+  .module-name {
+    font-family: 'Orbitron', sans-serif;
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--cyan);
+    letter-spacing: 2px;
+  }
+
+  .module-btn.all-mode .module-name { color: var(--purple); }
+
+  .module-desc {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    color: var(--text-dim);
+    margin-top: 4px;
+    letter-spacing: 1px;
+  }
+
+  .module-count {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 11px;
+    color: var(--text-dim);
+    background: var(--bg);
+    border: 1px solid var(--border);
+    padding: 4px 10px;
+    white-space: nowrap;
+  }
+
+  #screen-quiz { display: none; flex-direction: column; gap: 20px; }
+
+  .quiz-meta {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px 0;
+    border-bottom: 1px solid var(--border2);
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  .quiz-module-tag {
+    font-family: 'Orbitron', sans-serif;
+    font-size: 10px;
+    color: var(--cyan);
+    letter-spacing: 2px;
+    border: 1px solid var(--cyan);
+    padding: 4px 10px;
+  }
+
+  .quiz-score-live {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 13px;
+    color: var(--green);
+  }
+
+  .quiz-round-tag {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 11px;
+    color: var(--yellow);
+    letter-spacing: 2px;
+    text-transform: uppercase;
+  }
+
+  .progress-bar-wrap {
+    background: var(--bg2);
+    height: 4px;
+    border: 1px solid var(--border);
+    overflow: hidden;
+  }
+
+  .progress-bar-fill {
+    height: 100%;
+    background: linear-gradient(90deg, var(--cyan), var(--green));
+    box-shadow: 0 0 8px var(--cyan);
+    transition: width 0.4s ease;
+  }
+
+  .progress-label {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 10px;
+    color: var(--text-dim);
+    text-align: right;
+    margin-top: 4px;
+    letter-spacing: 1px;
+  }
+
+  .question-card {
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    padding: 28px;
+    position: relative;
+  }
+
+  .question-card::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 2px;
+    background: linear-gradient(90deg, var(--cyan), transparent);
+  }
+
+  .question-type-tag {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 10px;
+    color: var(--purple);
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    margin-bottom: 14px;
+    opacity: 0.8;
+  }
+
+  .question-text {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 15px;
+    color: var(--text);
+    line-height: 1.7;
+    margin-bottom: 24px;
+  }
+
+  .question-text code {
+    font-family: 'Share Tech Mono', monospace;
+    background: rgba(0,229,255,0.08);
+    border: 1px solid var(--border);
+    padding: 2px 6px;
+    color: var(--cyan);
+    font-size: 13px;
+  }
+
+  .options-list { display: flex; flex-direction: column; gap: 10px; }
+
+  .option-btn {
+    background: var(--bg);
+    border: 1px solid var(--border);
+    padding: 14px 18px;
+    cursor: pointer;
+    display: flex;
+    align-items: flex-start;
+    gap: 14px;
+    transition: all 0.15s;
+    text-align: left;
+    width: 100%;
+  }
+
+  .option-btn:hover:not(:disabled) {
+    border-color: var(--cyan2);
+    background: rgba(0,229,255,0.05);
+    box-shadow: inset 0 0 20px rgba(0,229,255,0.03);
+  }
+
+  .option-btn.selected {
+    border-color: var(--cyan);
+    background: rgba(0,229,255,0.08);
+  }
+
+  .option-btn.correct {
+    border-color: var(--green) !important;
+    background: rgba(57,255,20,0.08) !important;
+    box-shadow: 0 0 12px rgba(57,255,20,0.15) !important;
+  }
+
+  .option-btn.incorrect {
+    border-color: var(--red) !important;
+    background: rgba(255,60,90,0.08) !important;
+    box-shadow: 0 0 12px rgba(255,60,90,0.15) !important;
+  }
+
+  .option-btn:disabled { cursor: default; }
+
+  .option-key {
+    font-family: 'Orbitron', sans-serif;
+    font-size: 11px;
+    font-weight: 700;
+    color: var(--cyan);
+    min-width: 22px;
+    margin-top: 1px;
+    flex-shrink: 0;
+  }
+
+  .option-btn.correct .option-key { color: var(--green); }
+  .option-btn.incorrect .option-key { color: var(--red); }
+
+  .option-text {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 13px;
+    color: var(--text);
+    line-height: 1.6;
+  }
+
+  .fill-input {
+    background: var(--bg);
+    border: 1px solid var(--border);
+    padding: 12px 16px;
+    color: var(--cyan);
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 14px;
+    width: 100%;
+    outline: none;
+    transition: border-color 0.15s;
+    letter-spacing: 2px;
+  }
+
+  .fill-input:focus { border-color: var(--cyan); box-shadow: 0 0 8px rgba(0,229,255,0.15); }
+  .fill-input.correct { border-color: var(--green); background: rgba(57,255,20,0.05); }
+  .fill-input.incorrect { border-color: var(--red); background: rgba(255,60,90,0.05); }
+
+  .feedback-box {
+    padding: 14px 18px;
+    border-left: 3px solid;
+    margin-top: 16px;
+    display: none;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12px;
+    line-height: 1.6;
+  }
+
+  .feedback-box.correct {
+    display: block;
+    border-color: var(--green);
+    background: rgba(57,255,20,0.05);
+    color: var(--green);
+  }
+
+  .feedback-box.incorrect {
+    display: block;
+    border-color: var(--red);
+    background: rgba(255,60,90,0.05);
+    color: var(--red);
+  }
+
+  .action-row {
+    display: flex;
+    gap: 12px;
+    justify-content: flex-end;
+    flex-wrap: wrap;
+  }
+
+  .btn {
+    font-family: 'Orbitron', sans-serif;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 2px;
+    padding: 12px 24px;
+    border: 1px solid;
+    cursor: pointer;
+    text-transform: uppercase;
+    transition: all 0.2s;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .btn-primary {
+    background: rgba(0,229,255,0.08);
+    border-color: var(--cyan);
+    color: var(--cyan);
+  }
+
+  .btn-primary:hover {
+    background: rgba(0,229,255,0.18);
+    box-shadow: var(--glow);
+  }
+
+  .btn-secondary {
+    background: transparent;
+    border-color: var(--border);
+    color: var(--text-dim);
+  }
+
+  .btn-secondary:hover {
+    border-color: var(--text-dim);
+    color: var(--text);
+  }
+
+  .btn-check {
+    background: rgba(0,229,255,0.08);
+    border-color: var(--cyan);
+    color: var(--cyan);
+  }
+
+  .btn-check:hover { background: rgba(0,229,255,0.18); box-shadow: var(--glow); }
+  .btn-check:disabled { opacity: 0.3; cursor: default; }
+
+  #screen-results { display: none; flex-direction: column; gap: 24px; }
+
+  .results-header {
+    text-align: center;
+    padding: 30px;
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    position: relative;
+  }
+
+  .results-header::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 2px;
+    background: linear-gradient(90deg, transparent, var(--cyan), transparent);
+  }
+
+  .results-score {
+    font-family: 'Orbitron', sans-serif;
+    font-size: clamp(40px, 10vw, 72px);
+    font-weight: 900;
+    line-height: 1;
+    margin-bottom: 8px;
+  }
+
+  .results-score.excellent { color: var(--green); text-shadow: 0 0 30px rgba(57,255,20,0.4); }
+  .results-score.good { color: var(--cyan); text-shadow: 0 0 30px rgba(0,229,255,0.4); }
+  .results-score.poor { color: var(--red); text-shadow: 0 0 30px rgba(255,60,90,0.4); }
+
+  .results-label {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 13px;
+    color: var(--text-dim);
+    letter-spacing: 2px;
+  }
+
+  .results-summary-box {
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    padding: 18px 20px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 13px;
+    line-height: 1.7;
+    color: var(--text);
+  }
+
+  .results-summary-box strong { color: var(--yellow); }
+
+  .results-stats {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 12px;
+  }
+
+  .stat-box {
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    padding: 16px;
+    text-align: center;
+  }
+
+  .stat-value {
+    font-family: 'Orbitron', sans-serif;
+    font-size: 24px;
+    font-weight: 700;
+    margin-bottom: 4px;
+  }
+
+  .stat-label {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 10px;
+    color: var(--text-dim);
+    letter-spacing: 2px;
+    text-transform: uppercase;
+  }
+
+  .stat-box.correct-stat .stat-value { color: var(--green); }
+  .stat-box.wrong-stat .stat-value { color: var(--red); }
+  .stat-box.total-stat .stat-value { color: var(--cyan); }
+
+  .review-title {
+    font-family: 'Orbitron', sans-serif;
+    font-size: 12px;
+    color: var(--red);
+    letter-spacing: 3px;
+    border-bottom: 1px solid var(--border);
+    padding-bottom: 10px;
+  }
+
+  .review-item {
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    border-left: 3px solid var(--red);
+    padding: 16px 20px;
+  }
+
+  .review-q {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 13px;
+    color: var(--text);
+    margin-bottom: 10px;
+    line-height: 1.6;
+  }
+
+  .review-your, .review-correct {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 11px;
+    margin-top: 4px;
+    letter-spacing: 1px;
+    line-height: 1.5;
+  }
+
+  .review-your { color: var(--red); }
+  .review-correct { color: var(--green); }
+
+  .results-actions {
+    display: flex;
+    gap: 12px;
+    justify-content: center;
+    flex-wrap: wrap;
+  }
+
+  .footer {
+    margin-top: auto;
+    padding: 24px 0 16px;
+    text-align: center;
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 10px;
+    color: var(--text-dim);
+    letter-spacing: 2px;
+    border-top: 1px solid var(--border2);
+    opacity: 0.5;
+  }
+
+  @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+  .fade-in { animation: fadeIn 0.3s ease forwards; }
+
+  @keyframes glitch {
+    0%, 100% { clip-path: none; transform: none; }
+    20% { clip-path: polygon(0 30%, 100% 30%, 100% 50%, 0 50%); transform: translateX(-3px); }
+    40% { clip-path: polygon(0 60%, 100% 60%, 100% 80%, 0 80%); transform: translateX(3px); }
+    60% { clip-path: none; transform: none; }
+  }
+
+  .header-title:hover { animation: glitch 0.4s steps(2); }
+
+  .option-btn.multi-selected {
+    border-color: var(--purple);
+    background: rgba(191,95,255,0.08);
+  }
+  .option-btn.multi-selected .option-key { color: var(--purple); }
+
+  @media (max-width: 700px) {
+    .results-stats {
+      grid-template-columns: 1fr;
+    }
+  }
+</style>
+</head>
+<body>
+<div class="container">
+  <div class="header">
+    <div class="header-label">// Administración de Sistemas Operativos</div>
+    <div class="header-title">ASO</div>
+    <div class="header-sub">ASIR 2º — Sistema de Autoevaluación <span>ACTIVO</span></div>
+  </div>
+
+  <div id="screen-modules">
+    <div class="modules-intro">// Selecciona un módulo temático</div>
+    <div id="module-list"></div>
+  </div>
+
+  <div id="screen-quiz">
+    <div class="quiz-meta">
+      <div class="quiz-module-tag" id="quiz-module-tag">MÓDULO</div>
+      <div class="quiz-round-tag" id="quiz-round-tag">Ronda inicial</div>
+      <div class="quiz-score-live" id="quiz-score-live">✓ 0 &nbsp; ✗ 0</div>
+    </div>
+    <div class="progress-bar-wrap">
+      <div class="progress-bar-fill" id="progress-fill" style="width:0%"></div>
+    </div>
+    <div class="progress-label" id="progress-label">0 / 0</div>
+
+    <div class="question-card fade-in" id="question-card">
+      <div class="question-type-tag" id="q-type-tag">TIPO</div>
+      <div class="question-text" id="q-text"></div>
+      <div id="q-options"></div>
+      <div class="feedback-box" id="q-feedback"></div>
+    </div>
+
+    <div class="action-row">
+      <button class="btn btn-secondary" onclick="goHome()">← INICIO</button>
+      <button class="btn btn-check" id="btn-check" onclick="checkAnswer()">COMPROBAR</button>
+      <button class="btn btn-primary" id="btn-next" onclick="nextQuestion()" style="display:none">SIGUIENTE →</button>
+    </div>
+  </div>
+
+  <div id="screen-results">
+    <div class="results-header">
+      <div class="results-score" id="results-score">0%</div>
+      <div class="results-label" id="results-label">PUNTUACIÓN FINAL</div>
+    </div>
+
+    <div class="results-summary-box" id="results-summary-box"></div>
+
+    <div class="results-stats">
+      <div class="stat-box total-stat"><div class="stat-value" id="stat-total">0</div><div class="stat-label">Total</div></div>
+      <div class="stat-box correct-stat"><div class="stat-value" id="stat-correct">0</div><div class="stat-label">Correctas iniciales</div></div>
+      <div class="stat-box wrong-stat"><div class="stat-value" id="stat-wrong">0</div><div class="stat-label">Errores iniciales</div></div>
+    </div>
+    <div id="review-section"></div>
+    <div class="results-actions">
+      <button class="btn btn-secondary" onclick="goHome()">← INICIO</button>
+      <button class="btn btn-primary" onclick="restartQuiz()">↺ REPETIR</button>
+      <button class="btn btn-primary" id="btn-repeat-wrong" onclick="restartWrongOnly()" style="display:none">↺ SOLO FALLADAS</button>
+    </div>
+  </div>
+
+  <div class="footer">ASO · ASIR 2025/26 · CIDEAD</div>
+</div>
+
+<script>
+const modules = [
+  {
+    id: 'mod1',
+    name: 'MÓDULO 1',
+    desc: 'Directorio Activo, LDAP y GPO',
+    color: 'cyan',
+    questions: [
+      { type: 'single', text: '"cn=admin,dc=sored,dc=local" — ¿qué te sugiere?', options: ['Nada, falta la clave.', 'Administrar la base de datos de un LDAP.', 'Grupo admin del dominio sored.local.', 'Identificación del usuario "admin" del dominio sored.local.'], correct: 3 },
+      { type: 'single', text: '¿Qué es un controlador de dominio?', options: ['Es un conjunto de ordenadores interconectados entre sí formando una entidad común.', 'Son los servidores del tipo Windows Server en cualquiera de sus versiones en la cual cada uno de los servidores tiene una función específica.', 'Es una entidad administrativa.', 'Es un servidor del tipo Windows Server en cualquiera de sus versiones.'], correct: 3 },
+      { type: 'single', text: 'Si queremos crear un subdominio en Active Directory. ¿Qué afirmación es correcta?', options: ['Hay que configurar el DNS del nuevo servidor para que encuentre el servidor principal del dominio.', 'No hay que hacer nada, se realiza al finalizar el proceso de instalación del Active Directory.', 'Sólo hace falta habilitar el Netbios para encontrar el dominio principal y proseguirá con la relación de confianza.', 'Se crea el subdominio como dominio principal, al reiniciar el equipo, empezará la relación de confianza.'], correct: 0 },
+      { type: 'single', text: 'Tras unir un cliente al dominio wac.local, al reiniciar se muestra una nueva opción de inicio de sesión. ¿Cuál es?', options: ['wac.local\\usuario', 'Acceso corporativo wac.local (solo invitado)', 'wac\\Administrador', 'Iniciar sesión con cuenta Microsoft', 'Iniciar sesión con PIN (wac.local)'], correct: 2 },
+      { type: 'single', text: 'phpLDAPadmin permite editar...', options: ['Políticas de contraseñas sin necesidad de añadir entradas ppolicy.', 'Los archivos LDIF internos del servidor sin necesidad de acceso root.', 'Atributos LDAP de usuarios y OU.', 'Esquemas LDAP.'], correct: 2 },
+      { type: 'single', text: '¿Qué entendemos por esquema en un entorno LDAP?', options: ['Es la base de datos del sistema que sirve de referencia o índice de todos los recursos, grupos y usuarios del sistema.', 'Un gráfico indicando la organización del LDAP.', 'Es un modelo transaccional entre varias bases de datos que se interrelacionan con el sistema base.', 'Es un modelo de los datos que pueden almacenarse en LDAP.'], correct: 3 },
+      { type: 'single', text: 'Para aplicar una GPO en Windows Server que impida instalar software solo a los usuarios de una OU concreta, ¿qué ajuste es necesario?', options: ['Hacer que la GPO sea "enforced" para todo el Dominio.', 'Enlazar un programa WMI con su directiva.', 'Enlazar la GPO a la OU adecuada.', 'Enlazar la GPO a Nivel de Dominio.'], correct: 2 },
+      { type: 'single', text: '¿Qué hace el comando: ldapsearch -x | grep \'mail:\' | cut -f 2 > pp; echo $(cat pp | awk \'{print $1"," }\') > email?', options: ['El comando awk no existe.', 'El archivo email contendrá la lista de todos los e-mail, separados por comas "," y en una sola línea.', 'El comando cut está mal configurado.', 'El archivo pp tendrá líneas de todos los correos electrónicos.'], correct: 1 },
+      { type: 'single', text: '¿Qué es "nombre distinguido"?', options: ['Es un atributo por el que se identifica un objeto.', 'Ninguna es correcta.', 'Es el alias que se da al dominio.', 'Es la identificación de una Unidad Organizativa.'], correct: 0 },
+      { type: 'truefalse', text: 'Hemos instalado en el servidor un software que permite imprimir archivos PDF. Es posible administrar derechos y privilegios de acceso a dicho software a usuarios y/o grupos a través del LDAP. ¿Verdadero o falso?', options: ['Verdadero', 'Falso'], correct: 0 },
+      { type: 'single', text: '¿Las carpetas son parte del directorio activo?', options: ['No, es parte del sistema operativo a nivel local.', 'Sí, porque el directorio activo controla todas las transacciones del sistema.', 'Ninguna respuesta es correcta.', 'Sí, dejan de controlarse a nivel local para que lo administre el directorio activo.'], correct: 0 },
+      { type: 'single', text: 'LDAP es un acrónimo que significa "Protocolo Ligero de Acceso a Directorios" en castellano. ¿Qué significan cada una de las iniciales?', options: ['Life Dir Access Protocol.', 'Lightweight Directory Access Protocol.', 'Light Directory Acces Protocol.', 'Little Directory Action Protocol.'], correct: 1 },
+      { type: 'single', text: '¿Un nombre de dominio debe estar cualificado por un registrador en Internet?', options: ['Sí, todos los dominios deben ser cualificados.', 'Ninguna de las otras respuestas es correcta.', 'No, pero es conveniente que el nombre no sea registrable.', 'No, pero el dominio no será "visible" por la red.'], correct: 3 },
+      { type: 'single', text: 'FusionDirectory permite gestionar políticas de contraseñas ya que…', options: ['Incorpora un plugin ppolicy.', 'Utiliza un motor MySQL interno.', 'Es una interfaz para Samba y no para LDAP.', 'Las políticas de contraseñas vienen activadas por defecto en cualquier instalación de OpenLDAP.', 'Solo funciona en Windows.'], correct: 0 }
+    ]
+  },
+  {
+    id: 'mod2',
+    name: 'MÓDULO 2',
+    desc: 'Monitorización y Rendimiento del Sistema',
+    color: 'cyan',
+    questions: [
+      { type: 'single', text: 'Se utiliza rsync para copiar el /home a otro disco. ¿Qué ventaja clave aporta frente a una copia tradicional?', options: ['Es más lento pero más seguro.', 'Permite copiar solo cambios, optimizando tiempo y espacio.', 'Copia siempre todos los archivos.', 'Utiliza una interfaz gráfica.'], correct: 1 },
+      { type: 'single', text: '¿Qué herramienta es válida para monitorizar, gráficamente, los archivos de mensajes en GNU/Linux?', options: ['gnome-system-tools.', 'gsystemlog.', 'logs-system.', 'gnome-system-log.'], correct: 3 },
+      { type: 'truefalse', text: 'Con el monitor de rendimiento de Windows Server, en el apartado de rendimiento, podemos evaluar el rendimiento de un equipo del dominio. ¿Verdadero o falso?', options: ['Verdadero', 'Falso'], correct: 0 },
+      { type: 'single', text: '¿Qué realiza klogd?', options: ['Se encarga de generar mensajes con los accesos externos.', 'Ninguna es correcta.', 'Se encarga de los mensajes del kernel de Windows Server.', 'Se encarga de los mensajes del kernel de GNU/Linux.'], correct: 3 },
+      { type: 'single', text: '¿Qué protocolo se usa en la difusión de los recursos de Windows?', options: ['SMB/CIFS.', 'SMB.', 'NTFS.', 'NFS.'], correct: 0 },
+      { type: 'single', text: '¿Las estadísticas son necesarias para conocer el rendimiento?', options: ['No, tenemos alternativas para evitar las estadísticas. Con la observación diaria puede ser suficiente.', 'No, con analizar, mediante filtros, los mensajes del sistema sería suficiente.', 'Ninguna respuesta es correcta.', 'Sí, aunque tenemos alternativas más tediosas.'], correct: 3 },
+      { type: 'single', text: 'Al monitorizar en GNU/Linux con top, ¿qué NO es lo que aparece en la cabecera?', options: ['NI.', 'GROUP.', 'PR.', 'PDI.'], correct: 1 },
+      { type: 'single', text: 'Si queremos que en el inicio GNU/Linux tome un recurso, por ejemplo de Windows, ¿qué archivo debemos modificar?', options: ['Modificar el archivo /etc/fstab.', 'Ninguna es correcta.', 'Modificar el archivo /etc/filesystems.', 'Modificar el archivo /etc/exports.'], correct: 0 },
+      { type: 'single', text: 'En Debian, ¿con cuál de estos comandos podemos instalar paquetes?', options: ['apt-get.', 'rpm.', 'yum.', 'get.'], correct: 0 },
+      { type: 'single', text: 'Tras instalar sysstat, los comandos sar no muestran datos históricos inmediatamente. ¿Cuál es la causa?', options: ['Falta instalar ksar.', 'Los datos se generan de forma periódica.', 'Es necesario ejecutar manualmente sar con permisos root para comenzar a registrar datos.', 'sar solo funciona en modo gráfico.', 'sysstat necesita reiniciar el sistema.'], correct: 1 },
+      { type: 'single', text: '¿Las estructuras de directorios son iguales en todos los sistemas operativos?', options: ['Ninguna respuesta es correcta.', 'Sí, aunque hay diferencias en cómo nombrarlos, su estructura es igual.', 'No, son similares pero hay diferencias que deben tenerse en cuenta.', 'Sí, aunque no se llamen igual, su estructura es la misma.'], correct: 2 },
+      { type: 'single', text: 'Una métrica muestra un alto uso de red, pero bajo uso de CPU y memoria. ¿Cuál crees que es la situación más probable?', options: ['Un ataque al sistema.', 'Un error de monitorización.', 'Un proceso de copia o transferencia.', 'Un fallo de hardware.'], correct: 2 },
+      { type: 'single', text: 'El análisis de Windows Server muestra una advertencia relacionada con servicios no configurados según las prácticas recomendadas. ¿Cuál es el objetivo principal del BPA?', options: ['Optimizar automáticamente el sistema.', 'Sustituir al Monitor de rendimiento.', 'Comparar la configuración con estándares recomendados.', 'Identificar configuraciones que pueden afectar a la seguridad, rendimiento o disponibilidad del rol.', 'Detectar malware.'], correct: 3 },
+      { type: 'single', text: 'Con la opción de confiabilidad de Windows Server, ¿qué podemos observar?', options: ['Los avisos del mensaje.', 'Los mensajes del sistema por días.', 'Los mensajes del sistema por orden de importancia.', 'Los mensajes graves del sistema.'], correct: 1 }
+    ]
+  },
+  {
+    id: 'mod3',
+    name: 'MÓDULO 3',
+    desc: 'Acceso Remoto, SSH y Escritorio Remoto',
+    color: 'cyan',
+    questions: [
+      { type: 'single', text: '¿En qué equipo es recomendable instalar el rol de Servicios de Escritorio Remoto?', options: ['En el servidor donde está IIS.', 'En un servidor donde no esté instalado IIS.', 'En un equipo que no sea controlador de dominio.', 'En un equipo que sea controlador de dominio.'], correct: 2 },
+      { type: 'fill', text: '¿Con qué opción del comando ssh se realiza una redirección de puertos local para crear el túnel SSH?', correct: '-L', hint: 'Una sola letra/opción, incluyendo el guión.' },
+      { type: 'single', text: '¿Cuántos servidores WSUS puede haber en una misma red?', options: ['Tantos como se estimen necesarios, según la arquitectura.', 'Sólo es posible un servidor WSUS por red.', 'Ninguno, ya que dicho servidor debe estar fuera de la red.', 'Dos: un servidor principal y otro de seguridad.'], correct: 0 },
+      { type: 'single', text: '¿Cuál de los siguientes es un tipo de shell en Linux?', options: ['GNOME.', 'Bash.', 'Lsh.', 'CMD.'], correct: 1 },
+      { type: 'single', text: '¿Dónde se instala la aplicación NoMachine NX?', options: ['El paquete Client NX en el cliente y el paquete Server NX en el servidor.', 'El paquete Server NX en el cliente y el paquete Client NX en el cliente.', 'En el equipo desde el que se realiza el acceso remoto.', 'Sólo es necesario instalar un paquete en el servidor.'], correct: 0 },
+      { type: 'single', text: 'Si en Debian me encuentro en la consola TTY4, ¿qué operación debo realizar para ir a la consola TTY5?', options: ['[Alt]+[<-].', '[Ctrl]+[Alt]+[5].', '[Alt]+[5].', '[Alt]+[F5].'], correct: 3 },
+      { type: 'single', text: '¿Qué servicios deben estar activos para poder utilizar WDS?', options: ['DFS y DHCP.', 'DNS y NFS.', 'DHCP y DNS.', 'DFS y DNS.'], correct: 2 },
+      { type: 'single', text: '¿Cuál de los siguientes servicios no forma parte del rol de Servicios de Escritorio Remoto?', options: ['Escritorio Remote.', 'Administrador de licencias de RDS.', 'Agente de sesiones de RDS.', 'Gestor de conexiones RemoteApp.'], correct: 3 },
+      { type: 'single', text: '¿Qué puerto utiliza por defecto Webmin?', options: ['100.', '10000.', '1000.', '22.'], correct: 1 },
+      { type: 'single', text: '¿Cuál de las siguientes afirmaciones sobre administración remota es CIERTA?', options: ['Puede hacerse a través de Internet.', 'Puede usarse Internet, pero es necesaria la autorización del ISP.', 'El alcance máximo es la propia LAN.', 'El técnico no puede saber con exactitud a cuántos equipos da soporte.'], correct: 0 },
+      { type: 'fill', text: 'Indica el comando válido para crear una redirección de puerto local para que el puerto local 5252 se utilice como acceso al servicio MySQL remoto (puerto 3306).', correct: 'ssh -L 5252:localhost:3306 usuario@servidor_remoto', hint: 'Formato: ssh -L puerto_local:host_remoto:puerto_remoto usuario@servidor' },
+      { type: 'single', text: '¿Dónde se instala la aplicación Xming?', options: ['El paquete Server Xming en el cliente y el paquete Client Xming en el cliente.', 'Sólo es necesario instalar un paquete en el servidor.', 'En el equipo desde el que se realiza el acceso remoto.', 'El paquete Client Xming en el cliente y el paquete Server Xming en el servidor.'], correct: 2 },
+      { type: 'single', text: 'Si el túnel SSH se crea desde Windows Server hacia GNU/Linux usando el puerto local 5252, ¿qué comando describe mejor el objetivo del túnel?', options: ['Permitir conexiones SSH simultáneas desde ambos servidores.', 'Acceder al servicio MySQL remoto como si fuera local mediante un puerto distinto.', 'Redirigir el puerto 5252 del servidor Linux hacia MySQL en Windows.', 'Sustituir el puerto 3306 de MySQL por 5252 en el servidor Linux.'], correct: 1 },
+      { type: 'single', text: '¿En qué archivo de configuración se puede modificar el puerto por defecto del servicio SSH?', options: ['/etc/ssh/ssh_config', '/etc/network/interfaces', '/etc/ssh/sshd_config', '/etc/services'], correct: 2 }
+    ]
+  },
+  {
+    id: 'mod4',
+    name: 'MÓDULO 4',
+    desc: 'Servidores de Impresión',
+    color: 'cyan',
+    questions: [
+      { type: 'single', text: '¿Cuál de estos sistemas de impresión es válido, normalmente, en impresoras?', options: ['Offset.', 'Láser.', 'Estereotipia.', 'Xilografía.'], correct: 1 },
+      { type: 'truefalse', text: 'Un servidor Windows Server puede compartir las impresoras sin necesidad de instalar el servidor de impresión. ¿Verdadero o falso?', options: ['Verdadero', 'Falso'], correct: 0 },
+      { type: 'multi', text: '¿Por qué se recomienda utilizar impresoras virtuales HP para la realización de la práctica de Administración de servidores de impresión?', options: ['Porque Windows no detecta otros fabricantes.', 'Porque dichos controladores no necesitan puerto IPP.', 'Porque HP incluye gran cantidad de controladores compatibles (HPLIP).', 'Porque consumen menos recursos del sistema.'], correct: [2] },
+      { type: 'single', text: '¿Podríamos compartir una impresora conectada por bluetooth?', options: ['Sí, en cualquier caso.', 'No, sólo es posible una conexión.', 'Ninguna es correcta.', 'Sí, siempre y cuando el sistema operativo permita compartir el recurso.'], correct: 3 },
+      { type: 'single', text: '¿Qué te sugiere el comando "lpstat –t"?', options: ['Obtiene toda la información de las impresoras y sus estados.', 'Es un comando GNU/Linux para agregar impresoras.', 'Nada.', 'Es un comando de Windows para obtener detalladamente el estado de las impresoras.'], correct: 0 },
+      { type: 'single', text: 'Con CUPS, ¿podríamos imprimir directamente sin pasar por SAMBA?', options: ['No, sólo se puede hacer a través de SAMBA.', 'No, no se puede imprimir de ninguna manera, no se "entienden" GNU/Linux y Windows.', 'Ninguna respuesta es correcta.', 'Sí, configurando la cola de impresión adecuadamente.'], correct: 3 },
+      { type: 'single', text: 'Una impresora está conectada, localmente, a un equipo y este está conectado a un router. ¿Podemos compartir el recurso?', options: ['Sí, en cualquier caso.', 'No, en ningún caso.', 'Sí, siempre y cuando el equipo esté preparado para escuchar el puerto IPP.', 'No, aunque se puede compartir localmente no hay otros equipos en la red.'], correct: 2 },
+      { type: 'single', text: '¿Podrías montar un equipo sencillo, con Windows 10, como servidor de impresión?', options: ['Sí, aunque con algunas limitaciones propias de su sistema operativo.', 'Sí, con un mínimo de 4 Gb.', 'No, porque su sistema operativo no permite multitarea.', 'No, porque puede colapsar la red local.'], correct: 0 },
+      { type: 'truefalse', text: 'Un cliente GNU/Linux puede imprimir sobre una impresora virtual que genera archivos xps. ¿Verdadero o falso?', options: ['Verdadero', 'Falso'], correct: 1 },
+      { type: 'single', text: 'IPP está construido sobre…', options: ['HTTP.', 'Es un protocolo independiente.', 'SOCKET.', 'TCP/IP.'], correct: 0 },
+      { type: 'single', text: 'Tenemos un servidor SAMBA y varias impresoras en un servidor GNU/Linux, una de ellas virtual que genera archivos PDF. ¿Podemos, desde un equipo con Windows, imprimir en una impresora virtual PDF de GNU/Linux?', options: ['No, Windows no permite imprimir en impresoras virtuales remotas.', 'Sí, siempre y cuando tengamos el controlador adecuado.', 'Sí, podemos agregarla de forma automática.', 'Ninguna es correcta.'], correct: 1 }
+    ]
+  },
+  {
+    id: 'mod5',
+    name: 'MÓDULO 5',
+    desc: 'Scripts y Variables de Entorno',
+    color: 'cyan',
+    questions: [
+      { type: 'single', text: 'La nomenclatura #!/bin/bash es...', options: ['En Windows indica que los scripts utilizarán la shell de Bash.', 'Se utiliza en los scripts en GNU/Linux en la primera línea e indica que se debe ejecutar siguiendo los criterios de la shell de Bash.', 'En GNU/Linux indica modo depuración.', 'Ninguna respuesta es correcta.'], correct: 1 },
+      { type: 'single', text: 'En Windows, ¿dónde podemos encontrar las variables de entorno predefinidas?', options: ['Sólo en la variable del registro HKEY_LOCAL_MACHINE\\SYSTEM\\CurrentControlSet\\Control\\Session.', 'En las variables del registro HKEY_CURRENT_USER\\Environment y HKEY_LOCAL_MACHINE\\SYSTEM\\CurrentControlSet\\Control\\Session.', 'Igual que en GNU/Linux, no hay una base de datos donde se guarde esa información.', 'Ninguna respuesta es correcta.'], correct: 1 },
+      { type: 'truefalse', text: 'En GNU/Linux, podemos manipular con scripts el LDAP. ¿Verdadero o falso?', options: ['Verdadero', 'Falso'], correct: 0 },
+      { type: 'single', text: '¿Los scripts pueden utilizar y manipular las variables de entorno?', options: ['No, sólo se utilizan como información al usuario.', 'Sí, si lo pasamos como parámetro al programa de script.', 'Sí, pero deben asignársela a una variable propia del programa.', 'Sí, se pueden utilizar y manipular.'], correct: 3 },
+      { type: 'single', text: '¿Qué te sugiere %PROGRAMFILES%?', options: ['Ninguna respuesta es correcta.', 'Indica la ruta a los programas del sistema operativo de Windows.', 'Indica la ruta a los programas del usuario en Windows.', 'Es una variable de entorno indicando la ruta a los programas en Windows.'], correct: 3 },
+      { type: 'single', text: 'En un GNU/Linux, ¿qué contiene el archivo ~/.bashrc?', options: ['Hace referencia al script de inicio del usuario donde está alojado el archivo.', 'Hace referencia al tipo de shell que utilizará el usuario.', 'Ninguna respuesta es correcta.', 'Hace referencia al script de inicio de todos los usuarios.'], correct: 0 },
+      { type: 'single', text: '¿Qué extensiones son válidas para los scripts de Windows?', options: ['Sólo son válidas BAT y CMD.', 'Sólo es válida CMD.', 'Son válidas CMD y PS1.', 'Las extensiones válidas son BAT, CMD y PS1.'], correct: 3 },
+      { type: 'single', text: 'La variable de entorno EDITOR, ¿qué te sugiere?', options: ['Ninguna respuesta es correcta.', 'Nada, no es una variable de entorno.', 'Es una variable de entorno de Windows e indica la ruta al programa de edición que se utilizará para cualquier archivo.', 'Es una variable de entorno de GNU/Linux e indica la ruta al programa que se utilizará en la edición de los archivos.'], correct: 3 },
+      { type: 'single', text: 'Si ejecutamos echo $PATH, ¿qué obtendremos?', options: ['Nos aparecerá la ruta de búsqueda en Windows.', 'Es una variable de entorno y no se visualizará nada.', 'El comando es erróneo.', 'Nos aparecerá la ruta de búsqueda en GNU/Linux.'], correct: 3 },
+      { type: 'single', text: 'Al ejecutar "echo $PATH", ¿qué conseguiremos?', options: ['La variable de entorno es de Windows y la instrucción de GNU/Linux, no hará nada.', 'Es una instrucción y una variable de entorno de GNU/Linux y nos mostrará todas las rutas de búsqueda.', 'Es una instrucción de Windows que nos mostrará las rutas de búsqueda.', 'Es una instrucción de GNU/Linux y una variable de entorno de Windows, no hará nada.'], correct: 1 }
+    ]
+  },
+  {
+    id: 'mod6',
+    name: 'MÓDULO 6',
+    desc: 'Compartición de Recursos y Redes',
+    color: 'cyan',
+    questions: [
+      { type: 'single', text: 'Si uno de los equipos de la red tiene como sistema operativo MacOSX, ¿podría imprimir en una impresora que tenga, como sistema operativo, GNU/Linux?', options: ['Sí, es más, MacOSX es una evolución de UNIX, al igual que GNU/Linux.', 'Sí, pero debe realizarse a través de una aplicación de enlace.', 'Ninguna respuesta es correcta.', 'No, por no utilizar protocolos comunes.'], correct: 0 },
+      { type: 'single', text: 'Si queremos que un ordenador de una red físicamente separada acceda a un servidor (Windows Server o GNU/Linux), ¿cómo lo podemos hacer?', options: ['Un router sólo puede dejar pasar hacia un servidor.', 'Los routers intermedios no tienen capacidad de realizar DMZ.', 'Mediante un router intermedio y mapear los distintos puertos hacia el servidor que deseamos.', 'Se necesita un switch inteligente que separe las redes virtuales.'], correct: 2 },
+      { type: 'single', text: '¿Qué protocolos podemos utilizar para compartir recursos?', options: ['NFS, SMB/CIFS.', 'Ninguna respuesta es correcta.', 'TCP/IP, IPX.', 'NTFS, SAMBA.'], correct: 0 },
+      { type: 'single', text: 'En GNU/Linux tenemos compartido, además de espacio en un recurso de almacenamiento masivo, una impresora PDF. ¿Qué necesitaría Windows para poder "imprimir" un PDF en ese recurso?', options: ['Ninguna respuesta es correcta.', 'Necesita controladores de GNU/Linux para PDF.', 'Instalar los controladores necesarios.', 'No se puede "imprimir" en este formato.'], correct: 2 },
+      { type: 'single', text: 'En Windows, si queremos que un recurso sea accesible por un grupo o usuario determinado, debemos…', options: ['Debe darse permiso en la pestaña de seguridad y del recurso.', 'Ninguna respuesta es correcta.', 'Es suficiente añadirlo en permisos de seguridad.', 'Es suficiente añadirlo en permisos del recurso.'], correct: 0 },
+      { type: 'single', text: '¿Qué protocolo se utiliza actualmente para realizar la resolución de nombres de dominio entre máquinas de Windows?', options: ['Netbios sobre TCP/IP.', 'Netbios.', 'Ninguna respuesta es correcta.', 'Netbeui.'], correct: 0 },
+      { type: 'single', text: 'Tenemos una máquina con GNU/Linux y otra con Windows 10. La máquina con Windows 10 comparte una carpeta para toda la red en modo lectura. ¿Qué necesitamos en GNU/Linux para poder acceder a ese recurso?', options: ['Debemos tener instalado el servidor Samba de intercambio de archivos.', 'Ninguna respuesta es correcta.', 'Debemos tener instalado el cliente Samba.', 'Nada, porque ya tiene el software necesario.'], correct: 2 },
+      { type: 'single', text: 'Samba es…', options: ['Ninguna respuesta es correcta.', 'El protocolo que utiliza GNU/Linux para acceder a recursos Windows.', 'Es exactamente lo mismo que SMB/CIFS.', 'Es un servidor de recursos en GNU/Linux.'], correct: 3 },
+      { type: 'single', text: 'Dos redes separadas física y lógicamente por un router. ¿Puede un equipo de una de las redes acceder a los recursos de un servidor de otra red?', options: ['No, porque el router no encamina protocolos de aplicación.', 'Ninguna respuesta es correcta.', 'Sí, cualquier equipo de una red puede acceder a los recursos de cualquier ordenador de la otra red.', 'Sí, si está correctamente configurado el router.'], correct: 3 },
+      { type: 'single', text: 'El sistema de archivos de MacOSX es HFS+. ¿Es posible compartir archivos de este sistema con sistemas basados en GNU/Linux y sistema de archivos EXT3?', options: ['No, MacOSX no tiene soporte SMB/CIFS.', 'Sí, si ambos sistemas operativos tienen el soporte de compartición de recursos.', 'Sí, si los sistemas operativos basados en GNU/Linux tienen instalado el paquete MNFS.', 'No, MacOSX no tiene soporte NFS.'], correct: 1 }
+    ]
+  }
+];
+
+let currentModule = null;
+let currentQuestions = [];
+let currentIdx = 0;
+let score = 0;
+let wrong = 0;
+let wrongItems = [];
+let answered = false;
+let multiSelected = [];
+let reviewMode = false;
+let currentRound = 1;
+let reviewQueue = [];
+let nextReviewQueue = [];
+let initialTotal = 0;
+let initialCorrect = 0;
+let initialWrong = 0;
+let lastWrongQuestionSet = [];
+let sourceQuestionSet = [];
+
+function init() {
+  const list = document.getElementById('module-list');
+  list.innerHTML = '';
+
+  modules.forEach(m => {
+    const btn = document.createElement('button');
+    btn.className = 'module-btn';
+    btn.innerHTML = `
+      <div>
+        <div class="module-name">${m.name}</div>
+        <div class="module-desc">${m.desc}</div>
+      </div>
+      <div class="module-count">${m.questions.length} preguntas</div>
+    `;
+    btn.onclick = () => startQuiz(m.id);
+    list.appendChild(btn);
+  });
+
+  const allBtn = document.createElement('button');
+  const totalQ = modules.reduce((a, m) => a + m.questions.length, 0);
+  allBtn.className = 'module-btn all-mode';
+  allBtn.innerHTML = `
+    <div>
+      <div class="module-name">★ TODOS LOS MÓDULOS</div>
+      <div class="module-desc">Mezcla aleatoria de todos los temas</div>
+    </div>
+    <div class="module-count">${totalQ} preguntas</div>
+  `;
+  allBtn.onclick = () => startQuiz('all');
+  list.appendChild(allBtn);
+}
+
+function shuffle(arr) {
+  const a = [...arr];
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a;
+}
+
+function cloneQuestions(arr) {
+  return arr.map(q => ({
+    ...q,
+    options: q.options ? [...q.options] : undefined,
+    correct: Array.isArray(q.correct) ? [...q.correct] : q.correct
+  }));
+}
+
+function startQuiz(moduleId) {
+  let baseQuestions;
+
+  if (moduleId === 'all') {
+    currentModule = { name: 'TODOS LOS MÓDULOS', id: 'all' };
+    baseQuestions = modules.flatMap(m => m.questions);
+  } else {
+    currentModule = modules.find(m => m.id === moduleId);
+    baseQuestions = currentModule.questions;
+  }
+
+  sourceQuestionSet = cloneQuestions(baseQuestions);
+  currentQuestions = shuffle(cloneQuestions(baseQuestions));
+
+  currentIdx = 0;
+  score = 0;
+  wrong = 0;
+  wrongItems = [];
+  reviewMode = false;
+  currentRound = 1;
+  reviewQueue = [];
+  nextReviewQueue = [];
+  initialTotal = currentQuestions.length;
+  initialCorrect = 0;
+  initialWrong = 0;
+  lastWrongQuestionSet = [];
+
+  document.getElementById('btn-repeat-wrong').style.display = 'none';
+  show('screen-quiz');
+  document.getElementById('quiz-module-tag').textContent = currentModule.name;
+  renderQuestion();
+}
+
+function startReviewRound() {
+  reviewMode = true;
+  currentRound++;
+  currentQuestions = shuffle(cloneQuestions(reviewQueue));
+  currentIdx = 0;
+  nextReviewQueue = [];
+  renderQuestion();
+}
+
+function renderQuestion() {
+  answered = false;
+  multiSelected = [];
+
+  const q = currentQuestions[currentIdx];
+  const total = currentQuestions.length;
+
+  const pct = total ? (currentIdx / total) * 100 : 0;
+  document.getElementById('progress-fill').style.width = pct + '%';
+  document.getElementById('progress-label').textContent = `${currentIdx + 1} / ${total}`;
+  document.getElementById('quiz-score-live').innerHTML = reviewMode
+    ? `Pendientes ${currentQuestions.length - currentIdx}`
+    : `✓ ${score} &nbsp; ✗ ${wrong}`;
+  document.getElementById('quiz-round-tag').textContent = reviewMode
+    ? `Repaso de fallos · ronda ${currentRound - 1}`
+    : 'Ronda inicial';
+
+  const typeLabels = {
+    single: 'OPCIÓN MÚLTIPLE',
+    truefalse: 'VERDADERO / FALSO',
+    fill: 'COMPLETAR',
+    multi: 'MÚLTIPLE (varias correctas)'
+  };
+  document.getElementById('q-type-tag').textContent = typeLabels[q.type] || '';
+  document.getElementById('q-text').innerHTML = q.text;
+
+  const fb = document.getElementById('q-feedback');
+  fb.className = 'feedback-box';
+  fb.textContent = '';
+
+  const optDiv = document.getElementById('q-options');
+  optDiv.innerHTML = '';
+
+  const btnCheck = document.getElementById('btn-check');
+  const btnNext = document.getElementById('btn-next');
+  btnCheck.style.display = 'inline-block';
+  btnCheck.disabled = (q.type !== 'fill');
+  btnNext.style.display = 'none';
+
+  if (q.type === 'fill') {
+    const inp = document.createElement('input');
+    inp.type = 'text';
+    inp.className = 'fill-input';
+    inp.placeholder = q.hint || 'Escribe tu respuesta...';
+    inp.id = 'fill-answer';
+    inp.addEventListener('keydown', e => { if (e.key === 'Enter') checkAnswer(); });
+    inp.addEventListener('input', () => { btnCheck.disabled = inp.value.trim() === ''; });
+    optDiv.appendChild(inp);
+    setTimeout(() => inp.focus(), 50);
+  } else {
+    const keys = ['A', 'B', 'C', 'D', 'E'];
+    q.options.forEach((opt, i) => {
+      const btn = document.createElement('button');
+      btn.className = 'option-btn';
+      btn.innerHTML = `<span class="option-key">${keys[i]}</span><span class="option-text">${opt}</span>`;
+      btn.dataset.idx = i;
+
+      if (q.type === 'multi') {
+        btn.onclick = () => {
+          if (answered) return;
+          const idx = multiSelected.indexOf(i);
+          if (idx === -1) {
+            multiSelected.push(i);
+            btn.classList.add('multi-selected');
+          } else {
+            multiSelected.splice(idx, 1);
+            btn.classList.remove('multi-selected');
+          }
+          btnCheck.disabled = multiSelected.length === 0;
+        };
+        btnCheck.disabled = true;
+      } else {
+        btn.onclick = () => {
+          if (answered) return;
+          document.querySelectorAll('.option-btn').forEach(b => b.classList.remove('selected'));
+          btn.classList.add('selected');
+          btnCheck.disabled = false;
+        };
+      }
+
+      optDiv.appendChild(btn);
+    });
+  }
+
+  const card = document.getElementById('question-card');
+  card.classList.remove('fade-in');
+  void card.offsetWidth;
+  card.classList.add('fade-in');
+}
+
+function checkAnswer() {
+  if (answered) return;
+  answered = true;
+
+  const q = currentQuestions[currentIdx];
+  const fb = document.getElementById('q-feedback');
+  let isCorrect = false;
+
+  if (q.type === 'fill') {
+    const inp = document.getElementById('fill-answer');
+    const userVal = inp.value.trim().toLowerCase();
+    const correctVal = q.correct.toLowerCase();
+    isCorrect = userVal === correctVal || userVal.replace(/\s+/g, '') === correctVal.replace(/\s+/g, '');
+    inp.disabled = true;
+    inp.classList.add(isCorrect ? 'correct' : 'incorrect');
+  } else if (q.type === 'multi') {
+    const correctSet = new Set(q.correct);
+    const userSet = new Set(multiSelected);
+    isCorrect = correctSet.size === userSet.size && [...correctSet].every(v => userSet.has(v));
+    document.querySelectorAll('.option-btn').forEach(btn => {
+      const idx = parseInt(btn.dataset.idx, 10);
+      btn.disabled = true;
+      if (q.correct.includes(idx)) btn.classList.add('correct');
+      else if (multiSelected.includes(idx)) btn.classList.add('incorrect');
+    });
+  } else {
+    const selected = document.querySelector('.option-btn.selected');
+    const selectedIdx = selected ? parseInt(selected.dataset.idx, 10) : -1;
+    isCorrect = selectedIdx === q.correct;
+
+    document.querySelectorAll('.option-btn').forEach(btn => {
+      const idx = parseInt(btn.dataset.idx, 10);
+      btn.disabled = true;
+      if (idx === q.correct) btn.classList.add('correct');
+      else if (idx === selectedIdx) btn.classList.add('incorrect');
+    });
+  }
+
+  if (isCorrect) {
+    if (!reviewMode) score++;
+    fb.className = 'feedback-box correct';
+    fb.textContent = reviewMode ? '✓ Correcto — Esta pregunta sale del repaso' : '✓ Correcto';
+  } else {
+    const correctAnswer = getCorrectAnswerText(q);
+    fb.className = 'feedback-box incorrect';
+    fb.textContent = `✗ Incorrecto — Respuesta correcta: ${correctAnswer}`;
+
+    if (!reviewMode) {
+      wrong++;
+      wrongItems.push({
+        question: q.text,
+        userAnswer: getUserAnswerText(q),
+        correctAnswer: correctAnswer
+      });
+      reviewQueue.push(cloneQuestions([q])[0]);
+    } else {
+      nextReviewQueue.push(cloneQuestions([q])[0]);
+    }
+  }
+
+  if (!reviewMode) {
+    document.getElementById('quiz-score-live').innerHTML = `✓ ${score} &nbsp; ✗ ${wrong}`;
+  } else {
+    document.getElementById('quiz-score-live').innerHTML = `Pendientes ${currentQuestions.length - currentIdx}`;
+  }
+
+  document.getElementById('btn-check').style.display = 'none';
+  document.getElementById('btn-next').style.display = 'inline-block';
+
+  if (currentIdx + 1 >= currentQuestions.length) {
+    if (!reviewMode && reviewQueue.length > 0) {
+      document.getElementById('btn-next').textContent = 'REPASAR FALLADAS →';
+    } else if (reviewMode && nextReviewQueue.length > 0) {
+      document.getElementById('btn-next').textContent = 'OTRA RONDA →';
+    } else {
+      document.getElementById('btn-next').textContent = 'VER RESULTADOS →';
+    }
+  } else {
+    document.getElementById('btn-next').textContent = 'SIGUIENTE →';
+  }
+}
+
+function getCorrectAnswerText(q) {
+  if (q.type === 'fill') return q.correct;
+  if (q.type === 'multi') return q.correct.map(i => q.options[i]).join(', ');
+  return q.options[q.correct];
+}
+
+function getUserAnswerText(q) {
+  if (q.type === 'fill') {
+    const inp = document.getElementById('fill-answer');
+    return inp ? (inp.value || '(vacío)') : '(vacío)';
+  }
+  if (q.type === 'multi') {
+    if (multiSelected.length === 0) return '(sin selección)';
+    return multiSelected.map(i => q.options[i]).join(', ');
+  }
+  const sel = document.querySelector('.option-btn.selected, .option-btn.incorrect:not(.correct)');
+  if (!sel) return '(sin selección)';
+  return q.options[parseInt(sel.dataset.idx, 10)] || '(sin selección)';
+}
+
+function nextQuestion() {
+  currentIdx++;
+
+  if (currentIdx >= currentQuestions.length) {
+    if (!reviewMode) {
+      initialCorrect = score;
+      initialWrong = wrong;
+      lastWrongQuestionSet = cloneQuestions(reviewQueue);
+
+      if (reviewQueue.length > 0) {
+        startReviewRound();
+      } else {
+        showResults();
+      }
+    } else {
+      if (nextReviewQueue.length > 0) {
+        reviewQueue = cloneQuestions(nextReviewQueue);
+        startReviewRound();
+      } else {
+        showResults();
+      }
+    }
+  } else {
+    renderQuestion();
+  }
+}
+
+function showResults() {
+  show('screen-results');
+  const pct = Math.round((initialCorrect / initialTotal) * 100);
+
+  const scoreEl = document.getElementById('results-score');
+  scoreEl.textContent = pct + '%';
+  scoreEl.className = 'results-score ' + (pct >= 75 ? 'excellent' : pct >= 50 ? 'good' : 'poor');
+
+  document.getElementById('results-label').textContent = `${initialCorrect} de ${initialTotal} respuestas correctas en la primera vuelta`;
+  document.getElementById('stat-total').textContent = initialTotal;
+  document.getElementById('stat-correct').textContent = initialCorrect;
+  document.getElementById('stat-wrong').textContent = initialWrong;
+
+  const summary = document.getElementById('results-summary-box');
+  if (initialWrong > 0) {
+    summary.innerHTML = `Has terminado el test y además has completado el <strong>repaso automático de fallos</strong>.<br>Errores iniciales: <strong>${initialWrong}</strong>.<br>Rondas de repaso necesarias: <strong>${Math.max(0, currentRound - 1)}</strong>.<br>Estado final: <strong>todas las preguntas acabaron acertadas</strong>.`;
+  } else {
+    summary.innerHTML = `Test perfecto a la primera. No ha hecho falta activar el repaso de fallos.<br>Estado final: <strong>todas correctas en la vuelta inicial</strong>.`;
+  }
+
+  const rev = document.getElementById('review-section');
+  rev.innerHTML = '';
+
+  if (wrongItems.length > 0) {
+    const title = document.createElement('div');
+    title.className = 'review-title';
+    title.textContent = `// PREGUNTAS FALLADAS EN LA PRIMERA VUELTA (${wrongItems.length})`;
+    rev.appendChild(title);
+
+    wrongItems.forEach(item => {
+      const el = document.createElement('div');
+      el.className = 'review-item';
+      el.innerHTML = `
+        <div class="review-q">${item.question}</div>
+        <div class="review-your">✗ Tu respuesta: ${item.userAnswer}</div>
+        <div class="review-correct">✓ Correcta: ${item.correctAnswer}</div>
+      `;
+      rev.appendChild(el);
+    });
+
+    document.getElementById('btn-repeat-wrong').style.display = 'inline-block';
+  } else {
+    document.getElementById('btn-repeat-wrong').style.display = 'none';
+  }
+}
+
+function restartQuiz() {
+  startQuiz(currentModule.id);
+}
+
+function restartWrongOnly() {
+  if (!lastWrongQuestionSet.length) return;
+
+  currentModule = {
+    ...currentModule,
+    id: currentModule.id,
+    name: `${currentModule.name} · SOLO FALLADAS`
+  };
+
+  sourceQuestionSet = cloneQuestions(lastWrongQuestionSet);
+  currentQuestions = shuffle(cloneQuestions(lastWrongQuestionSet));
+  currentIdx = 0;
+  score = 0;
+  wrong = 0;
+  wrongItems = [];
+  reviewMode = false;
+  currentRound = 1;
+  reviewQueue = [];
+  nextReviewQueue = [];
+  initialTotal = currentQuestions.length;
+  initialCorrect = 0;
+  initialWrong = 0;
+
+  show('screen-quiz');
+  document.getElementById('quiz-module-tag').textContent = currentModule.name;
+  renderQuestion();
+}
+
+function goHome() {
+  show('screen-modules');
+  document.getElementById('btn-repeat-wrong').style.display = 'none';
+}
+
+function show(screenId) {
+  ['screen-modules', 'screen-quiz', 'screen-results'].forEach(id => {
+    document.getElementById(id).style.display = 'none';
+  });
+  const el = document.getElementById(screenId);
+  el.style.display = 'flex';
+  el.classList.remove('fade-in');
+  void el.offsetWidth;
+  el.classList.add('fade-in');
+}
+
+init();
+</script>
+</body>
+</html>
